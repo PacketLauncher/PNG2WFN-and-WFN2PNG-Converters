@@ -5,7 +5,7 @@ These Python script can convert a PNG file into an Adventure Game Studio (AGS) e
 
 Each can be used by dragging the relevant file(s) over it, or from the CLI.
 
-- The PNGtoWFN doesn't have any special settings in the CLI and behaves the same as dragging files over it. See below to learn about 4-bit shading and how to prepare a PNG for a WFN conversion.
+- The PNGtoWFN is straightforward and works the same way from either the CLI and by dragging files over it, with a single optional argument for base-color. See below to learn about 4-bit shading and how to prepare a PNG for a WFN conversion.
 
 	The CLI syntax is: WFNtoPNG.exe [filename.wfn]
 	
@@ -53,7 +53,17 @@ Level	Hex			RGB
 14		#EEEEEE		238, 238, 238
 15		#FFFFFF		255, 255, 255		<-- this white represents the font color
 	
-When converting a PNG to WFN, it will automatically check if there are shading on the glyphs. If it doesn't find any shadings, that means that you only used Black and White when drawing it, and it will generate a 1-bit WFN file that is backward compatible with any previous version of AGS. Else, it will generate a 4-bit WFN file that is supported in AGS 4.x and above only!
+When converting a PNG to WFN, it will automatically check if there are shading on the glyphs. If it doesn't find any shadings, that means that you only used Black and White when drawing it, and it will generate a 1-bit WFN file that is backward compatible with any previous version of AGS. Else, it will generate a 4-bit WFN file that is supported in AGS 4.x and above only! The command is simple:
+
+PNG2WFN.exe [filename.png]
+
+There's a single optional argument that you can pass after the filename and it's a base-shade; the base-shade is an index number of one of the above shades, excluding 0 (that is 1-15), which indicates which shade index should AGS use for the font's color, where the other shades would be either shadows or highlights of that color.
+
+The default base-color when dragging PNGs over the EXE is 8, which is the middle of the palette, giving you 7 colors for shadows and 7 colors for highlights. However, if you need more shades for either shadows or highlights, you can pass a different base-shade value towards the opposite direction of the palette - this would not change the actual glyphs brightness in the WFN font, but only store a pointer for AGS to know which shade should be painted by the font color. Examples:
+
+PNG2WFN.exe [filename.png] <-- this would default the base color to shade index 8
+PNG2WFN.exe [filename.png] --base-shade 12 <-- this would set the base color to shade index 12
+PNG2WFN.exe [filename1.png] [filename2.png] --base-shade 12 <-- this would set the base color for multiple files to shade index 12 (see more below about multiple files)
 
 Rules for preparing a PNG for a WFN conversion:
 -----------------------------------------------

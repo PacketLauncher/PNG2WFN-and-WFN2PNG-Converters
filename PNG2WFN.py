@@ -70,7 +70,7 @@ def record(im, depth):
                 buf[y*stride+x//2] |= shade << (4 if x%2==0 else 0)
     return struct.pack('<HH',w,h)+buf
 
-def build(glyphs, depth):
+def build(glyphs, depth, base_shade=8):
     if depth==1:
         data=bytearray(b'WGT Font File  '+b'\0\0')
         offsets=[0]*(max(glyphs)+1)
@@ -83,7 +83,7 @@ def build(glyphs, depth):
         if len(data)>65535 or table>65535: raise ValueError('1-bit WFN exceeds 65,535 bytes')
         struct.pack_into('<H',data,15,table)
     else:
-        data=bytearray(b'WGT Font File 2'+bytes(28))
+        data=bytearray(b'WGT Font File 2'+bytes(32))
         start=len(data)
         mapping=[]
         for index,im in sorted(glyphs.items()):
@@ -91,15 +91,31 @@ def build(glyphs, depth):
             data.extend(record(im,4))
         map_start=len(data)
         for index,offset in mapping: data.extend(struct.pack('<II',index,offset))
-        struct.pack_into('<7I',data,15,28,0,4,start,map_start-start,map_start,len(mapping)*8)
+        struct.pack_into('<8I',data,15,32,0,4,start,map_start-start,map_start,len(mapping)*8,base_shade)
     return data
 
 def main(argv):
     if not argv:
         command = Path(sys.executable).name if getattr(sys, 'frozen', False) else f'py {Path(__file__).name}'
         print(f'Drag PNG files onto {Path(sys.executable).name if getattr(sys, "frozen", False) else Path(__file__).name}, or pass PNG paths on the command line.')
-        print(f'\nUsage: {command} file.png [more.png ...]')
+        print(f'\nUsage: {command} file.png [more.png ...] [--base-shade 1-15]')
         return 1
+    base_shade = 8
+    if '--base-shade' in argv:
+        if argv.count('--base-shade') != 1:
+            raise ValueError('--base-shade may only be specified once')
+        pos = argv.index('--base-shade')
+        if pos + 1 >= len(argv):
+            raise ValueError('--base-shade requires a value from 1 to 15')
+        try:
+            base_shade = int(argv[pos + 1])
+        except ValueError:
+            raise ValueError('--base-shade must be an integer from 1 to 15')
+        if not 1 <= base_shade <= 15:
+            raise ValueError('--base-shade must be between 1 and 15')
+        argv = argv[:pos] + argv[pos + 2:]
+    if not argv:
+        raise ValueError('No PNG files specified')
     groups={}
     for arg in argv:
         path=Path(arg).resolve()
@@ -121,13 +137,13 @@ def main(argv):
             if overlap: raise ValueError(f'{path.name}: overlapping index {min(overlap)}')
             glyphs.update(new)
         depth=4 if is_4bit(glyphs) else 1
-        result=build(glyphs,depth)
+        result=build(glyphs,depth,base_shade)
         output_folder = folder / f'{depth}-bit'
         output = output_folder / (group['base'] + '.wfn')
         if output.exists(): raise ValueError('Output already exists: '+str(output))
         output_folder.mkdir(parents=True, exist_ok=True)
         output.write_bytes(result)
-        print(f'Created {output} ({len(glyphs)} glyphs, {depth}-bit, {len(result)} bytes)')
+        print(f'Created {output} ({len(glyphs)} glyphs, {depth}-bit, {len(result)} bytes' + (f', base shade {base_shade}' if depth == 4 else '') + ')')
     return 0
 
 if __name__=='__main__':
