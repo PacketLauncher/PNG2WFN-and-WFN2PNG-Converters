@@ -140,7 +140,14 @@ def main(argv):
         result=build(glyphs,depth,base_shade)
         output_folder = folder / f'{depth}-bit'
         output = output_folder / (group['base'] + '.wfn')
-        if output.exists(): raise ValueError('Output already exists: '+str(output))
+        if output.exists():
+            try:
+                answer = input(f'Output already exists: {output}\nOverwrite? [y/N]: ').strip().lower()
+            except EOFError:
+                answer = ''
+            if answer != 'y':
+                print(f'Skipped {output}')
+                continue
         output_folder.mkdir(parents=True, exist_ok=True)
         output.write_bytes(result)
         print(f'Created {output} ({len(glyphs)} glyphs, {depth}-bit, {len(result)} bytes' + (f', base shade {base_shade}' if depth == 4 else '') + ')')

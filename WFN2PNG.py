@@ -209,7 +209,16 @@ def convert(path, rowsize, mode, separator, placeholders, placeholder_size):
     targets = [output_folder / f'{path.stem}_{start}-{end}.png' for start, end in ranges]
     existing = [p for p in targets if p.exists()]
     if existing:
-        raise ValueError('Output already exists: ' + ', '.join(p.name for p in existing))
+        print('The following output PNG file(s) already exist:')
+        for existing_path in existing:
+            print(f'  {existing_path}')
+        try:
+            answer = input('Overwrite existing PNG file(s)? [y/N]: ').strip().lower()
+        except EOFError:
+            answer = ''
+        if answer != 'y':
+            print(f'Skipped {path.name}')
+            return
     output_folder.mkdir(parents=True, exist_ok=True)
     for (start, end), target in zip(ranges, targets):
         export_range(glyphs, start, end, depth, target, rowsize, mode, separator, fixed_dimensions)

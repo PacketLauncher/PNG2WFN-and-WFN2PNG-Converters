@@ -7,6 +7,11 @@ Refer to the README.txt to learn more.
 
 Changelog
 =========
+Version 1.0.1.1
+Released: 31 October, 2026
+- Fixed overwriting error.
+- Added overwriting confirmation prompt to prevent accidental data loss.
+
 Version 1.0.1.0
 Released: 29 October, 2026
 - Added a base-shade support for PNG2WFN (default to shade index 8 / dynamic in CLI)
